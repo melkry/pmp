@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weekly Meal Planner</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .bailey-yes {
+      background-color: #d1e7dd;
+    }
+  </style>
+</head>
+<body class="p-4">
+
+  <div class="container">
+    <h1 class="mb-4">Weekly Meal Planner</h1>
+
+    <div class="mb-3">
+      <label class="form-label">Bailey Days (comma-separated):</label>
+      <input type="text" id="baileyDaysInput" class="form-control" placeholder="e.g., Friday, Saturday">
+      <button class="btn btn-primary mt-2" onclick="generatePlan()">Generate Plan</button>
+    </div>
+
+    <table class="table table-bordered" id="mealTable">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Bailey Day</th>
+          <th>Meal</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows added by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const weekdayMeals = [
+      'Chicken Stir Fry (Sweet and sour, honey garlic, etc)', 'Chicken Drumsticks', 'Carnitas (Pulled pork burritos)', 
+      'Burgers', 'Chicken Burgers', 'Beef & Broccoli', 'Omelettes', 'Meatloaf', 
+      "Shepherd's Pie", 'Sloppy Joes'
+    ];
+
+    const weekendMeals = weekdayMeals.concat([
+      'Roast Beef Sandwiches (Arbys Knockoff)', 'Chicken pot pie filling & biscuits', 
+      'Cooked Ham', 'Cabbage Rolls', 'Beef Stew', 'Chicken Noodle Soup'
+    ]);
+
+    const baileyMeals = [
+      'Kabobs', 'Cheeseburger Sliders (Deconstructed for Bailey)', 'Burritos/Taco Salad', 
+      'Italian Chicken', 'Pancakes/Waffles', 'Ground Beef Pasta', 'Sausage Pasta', 
+      'Hot Dogs', 'Pork Chops', 'Cajun Chicken & Rice', 'Texan Beef Enchiladas', 
+      'Meatballs (Not Homemade) & Buns (Pasta for Bailey)'
+    ];
+
+    const baileyWeekendMeals = baileyMeals.concat([
+      'Chicken Parm', 'Lasagna (Pasta For Bailey)', 'Spaghetti/Pasta & Homemade Meatballs'
+    ]);
+
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    let currentPlan = [];
+    let usedMeals = new Set();
+
+    function getRandomElement(array, exclude = new Set()) {
+      const available = array.filter(meal => !exclude.has(meal));
+      if (available.length === 0) return null;
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function createPlan(baileyDays) {
+      usedMeals = new Set(); // Reset
+      return daysOfWeek.map(day => {
+        const isWeekend = ['Saturday', 'Sunday'].includes(day);
+        const isBaileyDay = baileyDays.includes(day);
+        let mealOptions = isBaileyDay
+          ? (isWeekend ? baileyWeekendMeals : baileyMeals)
+          : (isWeekend ? weekendMeals : weekdayMeals);
+
+        const meal = getRandomElement(mealOptions, usedMeals);
+        if (meal) usedMeals.add(meal);
+
+        return { day, baileyDay: isBaileyDay, meal: meal || 'No unique meal available' };
+      });
+    }
+
+    function generatePlan() {
+      const input = document.getElementById("baileyDaysInput").value;
+      const baileyDays = input.split(',').map(d => d.trim());
+      currentPlan = createPlan(baileyDays);
+      displayPlan();
+    }
+
+    function displayPlan() {
+      const tableBody = document.querySelector("#mealTable tbody");
+      tableBody.innerHTML = '';
+
+      currentPlan.forEach((entry, index) => {
+        const row = document.createElement('tr');
+        if (entry.baileyDay) row.classList.add('bailey-yes');
+
+        row.innerHTML = `
+          <td>${entry.day}</td>
+          <td>${entry.baileyDay ? 'Yes' : 'No'}</td>
+          <td id="meal-${index}">${entry.meal}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-secondary" onclick="randomizeMeal(${index})">Randomize</button>
+          </td>
+        `;
+
+        tableBody.appendChild(row);
+      });
+    }
+
+    function randomizeMeal(index) {
+      const entry = currentPlan[index];
+      const isWeekend = ['Saturday', 'Sunday'].includes(entry.day);
+      const mealOptions = entry.baileyDay
+        ? (isWeekend ? baileyWeekendMeals : baileyMeals)
+        : (isWeekend ? weekendMeals : weekdayMeals);
+
+      let newMeal;
+      const attempts = 10;
+      let attempt = 0;
+
+      // Try a few times to get a unique meal (except for the one we're replacing)
+      do {
+        newMeal = getRandomElement(mealOptions, new Set([...usedMeals].filter(m => m !== entry.meal)));
+        attempt++;
+      } while (usedMeals.has(newMeal) && newMeal !== entry.meal && attempt < attempts);
+
+      if (newMeal && newMeal !== entry.meal) {
+        usedMeals.delete(entry.meal);
+        usedMeals.add(newMeal);
+        entry.meal = newMeal;
+        document.getElementById(`meal-${index}`).textContent = newMeal;
+      }
+    }
+  </script>
+
+</body>
+</html>
