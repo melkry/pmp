@@ -38,49 +38,39 @@
   </div>
 
   <script>
-    const weekdayMeals = [
-      'Chicken Stir Fry (Sweet and sour, honey garlic, etc)', 'Chicken Drumsticks', 'Carnitas (Pulled pork burritos)', 
-      'Burgers', 'Chicken Burgers', 'Beef & Broccoli', 'Omelettes', 'Meatloaf', 
-      "Shepherd's Pie", 'Sloppy Joes', 'Pulled Pork'
+    const nonBaileyMeals = [
+      'Chicken Stir Fry (Sweet and sour, honey garlic, etc)', 'Chicken Drumsticks', 'Carnitas (Pulled pork burritos)',
+      'Burgers', 'Chicken Burgers', 'Beef & Broccoli', 'Omelettes', 'Meatloaf',
+      "Shepherd's Pie", 'Sloppy Joes', 'Pulled Pork', 'Roast Beef Sandwiches (Arbys Knockoff)',
+      'Chicken pot pie filling & biscuits', 'Cooked Ham', 'Cabbage Rolls', 'Beef Stew', 'Chicken Noodle Soup'
     ];
-
-    const weekendMeals = weekdayMeals.concat([
-      'Roast Beef Sandwiches (Arbys Knockoff)', 'Chicken pot pie filling & biscuits', 
-      'Cooked Ham', 'Cabbage Rolls', 'Beef Stew', 'Chicken Noodle Soup'
-    ]);
 
     const baileyMeals = [
-      'Kabobs', 'Cheeseburger Sliders (Deconstructed for Bailey)', 'Burritos/Taco Salad', 
-      'Italian Chicken', 'Pancakes/Waffles', 'Ground Beef Pasta', 'Sausage Pasta', 
-      'Hot Dogs', 'Pork Chops', 'Cajun Chicken & Rice', 'Texan Beef Enchiladas', 
-      'Meatballs (Not Homemade) & Buns (Pasta for Bailey)'
+      'Kabobs', 'Cheeseburger Sliders (Deconstructed for Bailey)', 'Burritos/Taco Salad',
+      'Italian Chicken', 'Pancakes/Waffles', 'Ground Beef Pasta', 'Sausage Pasta',
+      'Hot Dogs', 'Pork Chops', 'Cajun Chicken & Rice', 'Texan Beef Enchiladas',
+      'Meatballs (Not Homemade) & Buns (Pasta for Bailey)', 'Chicken Parm',
+      'Lasagna (Pasta For Bailey)', 'Spaghetti/Pasta & Homemade Meatballs'
     ];
-
-    const baileyWeekendMeals = baileyMeals.concat([
-      'Chicken Parm', 'Lasagna (Pasta For Bailey)', 'Spaghetti/Pasta & Homemade Meatballs'
-    ]);
 
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     let currentPlan = [];
     let usedMeals = new Set();
 
-    function getRandomElement(array, exclude = new Set()) {
-      const available = array.filter(meal => !exclude.has(meal));
+    function getRandomElement(array) {
+      const available = array.filter(meal => !usedMeals.has(meal));
       if (available.length === 0) return null;
       return available[Math.floor(Math.random() * available.length)];
     }
 
     function createPlan(baileyDays) {
-      usedMeals = new Set(); // Reset
+      usedMeals = new Set(); // reset tracker
       return daysOfWeek.map(day => {
-        const isWeekend = ['Saturday', 'Sunday'].includes(day);
         const isBaileyDay = baileyDays.includes(day);
-        let mealOptions = isBaileyDay
-          ? (isWeekend ? baileyWeekendMeals : baileyMeals)
-          : (isWeekend ? weekendMeals : weekdayMeals);
+        const mealOptions = isBaileyDay ? baileyMeals : nonBaileyMeals;
 
-        const meal = getRandomElement(mealOptions, usedMeals);
+        const meal = getRandomElement(mealOptions);
         if (meal) usedMeals.add(meal);
 
         return { day, baileyDay: isBaileyDay, meal: meal || 'No unique meal available' };
@@ -117,18 +107,14 @@
 
     function randomizeMeal(index) {
       const entry = currentPlan[index];
-      const isWeekend = ['Saturday', 'Sunday'].includes(entry.day);
-      const mealOptions = entry.baileyDay
-        ? (isWeekend ? baileyWeekendMeals : baileyMeals)
-        : (isWeekend ? weekendMeals : weekdayMeals);
+      const mealOptions = entry.baileyDay ? baileyMeals : nonBaileyMeals;
 
       let newMeal;
       const attempts = 10;
       let attempt = 0;
 
-      // Try a few times to get a unique meal (except for the one we're replacing)
       do {
-        newMeal = getRandomElement(mealOptions, new Set([...usedMeals].filter(m => m !== entry.meal)));
+        newMeal = getRandomElement(mealOptions);
         attempt++;
       } while (usedMeals.has(newMeal) && newMeal !== entry.meal && attempt < attempts);
 
